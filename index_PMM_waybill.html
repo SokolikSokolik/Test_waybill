@@ -162,7 +162,7 @@
     <div id="operatorContainer" class="hidden">
         <div id="topPencilAlert" class="pencil-top-alert hidden"></div>
         <div id="unitSubmodeBanner" class="warn-open-prev hidden" style="border-color:#38bdf8; color:#bae6fd; background:rgba(56,189,248,0.12);">
-            ℹ️ <b>Режим підрозділу Управління:</b> Відкриття нових листів здійснює Управління бригади. Ви бачите всі свої машини, заправки «на олівець» та вносите фактичні дані пробігу/мотогодин і витрати ПММ у відкриті листи (подвійний клік або кнопка «🔒 Закрити»).
+            ℹ️ <b>Режим підрозділу Управління:</b> Відкриття нових листів здійснює Управління бригади. Ви бачите всі свої машини, заправки «на олівець» та вносите фактичні дані пробігу/мотогодин і витрати ПММ у відкриті листи (подвійний клік або кнопка «🔒 Закрити»). У реквізитах шапки можна змінювати лише водія/відповідального.
         </div>
 
         <div class="toolbar-card">
@@ -217,7 +217,7 @@
                 <div class="filters-group">
                     <div class="filter-item">
                         <label for="selReviewerBatFilter">Батальйон</label>
-                        <select id="selReviewerBatFilter" onchange="renderReviewerQueueRows()">
+                        <select id="selReviewerBatFilter" onchange="onReviewerQueueBatFilterChange()">
                             <option value="ALL">Усі батальйони</option>
                             <option value="1ЛБ">1ЛБ</option>
                             <option value="2ЛБ">2ЛБ</option>
@@ -230,6 +230,12 @@
                         </select>
                     </div>
                     <div class="filter-item">
+                        <label for="selReviewerPidrozdilFilter">Підрозділ</label>
+                        <select id="selReviewerPidrozdilFilter" onchange="renderReviewerQueueRows()">
+                            <option value="ALL">Усі підрозділи</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
                         <label for="selReviewerPeriodFilter">Період</label>
                         <select id="selReviewerPeriodFilter" onchange="renderReviewerQueueRows()">
                             <option value="ALL">Усі періоди</option>
@@ -239,7 +245,7 @@
                         </select>
                     </div>
                     <div class="filter-item" style="flex:1;">
-                        <label for="txtRevSearch">Пошук по черзі перевірки (подвійний клік по рядку — відкрити картку)</label>
+                        <label for="txtRevSearch">Пошук по черзі перевірки (подвійний клік — картка)</label>
                         <input type="text" id="txtRevSearch" placeholder="Номер, марка, водій, маршрут..." oninput="renderReviewerQueueRows()">
                     </div>
                     <button class="btn btn-primary" style="height: 34px;" onclick="loadReviewerQueue()">🔄 Оновити чергу</button>
@@ -266,7 +272,7 @@
                     </div>
                     <div class="filter-item">
                         <label for="selArchiveBat">Батальйон</label>
-                        <select id="selArchiveBat" onchange="renderReviewerArchiveRows()">
+                        <select id="selArchiveBat" onchange="onReviewerArchiveBatFilterChange()">
                             <option value="ALL">Усі батальйони</option>
                             <option value="1ЛБ">1ЛБ</option>
                             <option value="2ЛБ">2ЛБ</option>
@@ -276,6 +282,12 @@
                             <option value="1БПС">1БПС</option>
                             <option value="2БПС">2БПС</option>
                             <option value="Упр">Упр</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="selArchivePidrozdil">Підрозділ</label>
+                        <select id="selArchivePidrozdil" onchange="renderReviewerArchiveRows()">
+                            <option value="ALL">Усі підрозділи</option>
                         </select>
                     </div>
                     <div class="filter-item">
@@ -311,7 +323,7 @@
                 <div class="filters-group">
                     <div class="filter-item">
                         <label for="selFleetBat">Батальйон</label>
-                        <select id="selFleetBat" onchange="renderFleetTable()">
+                        <select id="selFleetBat" onchange="onReviewerFleetBatFilterChange()">
                             <option value="ALL">Усі батальйони</option>
                             <option value="1ЛБ">1ЛБ</option>
                             <option value="2ЛБ">2ЛБ</option>
@@ -321,6 +333,12 @@
                             <option value="1БПС">1БПС</option>
                             <option value="2БПС">2БПС</option>
                             <option value="Упр">Упр</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="selFleetPidrozdil">Підрозділ</label>
+                        <select id="selFleetPidrozdil" onchange="renderFleetTable()">
+                            <option value="ALL">Усі підрозділи</option>
                         </select>
                     </div>
                     <div class="filter-item" style="flex:1;">
@@ -512,7 +530,7 @@
             <div id="boxMdlCounters"></div>
 
             <div class="section-divider">
-                <span>3. Рух ПММ (Пальне, Оливи та Спецрідини)</span>
+                <span>3. Рух ПММ (Пальне, Оливи та Спецрідини — Залишки в баках захищено 🔒)</span>
                 <button type="button" class="btn btn-xs btn-warn" id="btnToggleManualFuel" onclick="toggleManualFuelForm()">🎫 + Ручне внесення (Талон / Інша в/ч)</button>
             </div>
 
@@ -549,8 +567,8 @@
 
             <div class="grid-4">
                 <div class="field-group">
-                    <label for="mdlStartFuel" id="lblMdlStartFuel">Залишок на початок (л)</label>
-                    <input type="number" id="mdlStartFuel" step="1" oninput="recalcModalBalances()">
+                    <label for="mdlStartFuel" id="lblMdlStartFuel">🔒 Залишок на початок (л)</label>
+                    <input type="number" id="mdlStartFuel" step="1" readonly title="Залишок у баку захищено від змін">
                 </div>
                 <div class="field-group">
                     <label>Отримано пального (л)</label>
@@ -561,8 +579,8 @@
                     <input type="number" id="mdlConsumedFuel" step="1" min="0" oninput="recalcModalBalances()">
                 </div>
                 <div class="field-group">
-                    <label>Залишок на кінець (л)</label>
-                    <input type="text" id="mdlEndFuel" readonly style="color:#34d399; font-weight:700;">
+                    <label>🔒 Залишок на кінець (л)</label>
+                    <input type="text" id="mdlEndFuel" readonly style="color:#34d399; font-weight:700;" title="Розраховується автоматично">
                 </div>
             </div>
 
@@ -572,16 +590,16 @@
                     <input type="number" id="mdlConsumedOil" step="0.1" min="0" value="0" oninput="recalcModalBalances()">
                 </div>
                 <div class="field-group">
-                    <label>Залишок оливи в баку (л)</label>
-                    <input type="text" id="mdlEndOil" readonly style="color:#fde047; font-weight:700;">
+                    <label>🔒 Залишок оливи в баку (л)</label>
+                    <input type="text" id="mdlEndOil" readonly style="color:#fde047; font-weight:700;" title="Залишок оливи в баку захищено від ручних змін">
                 </div>
                 <div class="field-group">
                     <label for="mdlConsumedLiquid">Витрачено спецрідин (л)</label>
                     <input type="number" id="mdlConsumedLiquid" step="0.1" min="0" value="0" oninput="recalcModalBalances()">
                 </div>
                 <div class="field-group">
-                    <label>Залишок спецрідин (л)</label>
-                    <input type="text" id="mdlEndLiquid" readonly style="color:#86efac; font-weight:700;">
+                    <label>🔒 Залишок спецрідин (л)</label>
+                    <input type="text" id="mdlEndLiquid" readonly style="color:#86efac; font-weight:700;" title="Залишок спецрідин захищено від ручних змін">
                 </div>
             </div>
         </div>
@@ -666,7 +684,7 @@
         </div>
 
         <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:10px;">
-            ℹ️ Підрозділ, батальйон та залишки ПММ при редагуванні техніки захищені від змін.
+            ℹ️ Підрозділ, батальйон та залишки ПММ (пальне, оливи, спецрідини) у баках захищені від змін.
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--border); padding-top:12px;">
@@ -717,8 +735,16 @@
     let sortField = 'pidrozdil';
     let sortAsc = true;
 
+    let revQueueSortField = 'pidrozdil';
+    let revQueueSortAsc = true;
+    let revArchiveSortField = 'pidrozdil';
+    let revArchiveSortAsc = true;
+    let revFleetSortField = 'pidrozdil';
+    let revFleetSortAsc = true;
+
     let activeModalItem = null;
     let activeModalMode = 'open';
+    let isModalReadOnly = false;
     let isManualDriverMode = false;
     let selectedRouteRegions = [];
     let modalReceipts = [];
@@ -735,9 +761,13 @@
         return (session && (session.operator_type === 'СВТОЛ' || session.operator_type === 'ЕТС'));
     }
 
-    // Чи є поточний користувач підрозділом Управління (напр. АБ (Упр), ІР (Упр))
     function isUprSubunitUser() {
         return Boolean(session && session.bat === 'Упр' && session.pidrozdil && session.pidrozdil !== 'ALL');
+    }
+
+    // Стартові показники та залишки в баках у цій формі НЕ може змінювати ніхто і ніде
+    function canEditStartingCounters() {
+        return false;
     }
 
     function checkWaybillSession() {
@@ -752,7 +782,7 @@
                 pidrozdil: urlParams.get('pidrozdil') || 'ALL',
                 operator_type: urlParams.get('type'),
                 month_key: urlParams.get('month_key'),
-                can_edit: urlParams.get('can_edit') === 'true'
+                can_edit: urlParams.get('can_edit') === 'true' || urlParams.get('can_edit') === '1'
             };
             sessionStorage.setItem('pmm_waybill_session', JSON.stringify(session));
         } else {
@@ -860,7 +890,6 @@
                     selPer.add(new Option(`Період ${ROMAN_PERIODS[i]}`, ROMAN_PERIODS[i]));
                 }
 
-                // Якщо це підрозділ Управління — фільтруємо тільки його машини!
                 if (isUprSubunitUser()) {
                     terminalData.vehicles = (terminalData.vehicles || []).filter(v => v.pidrozdil === session.pidrozdil);
                     const selPidr = document.getElementById('selFilterPidrozdil');
@@ -1201,7 +1230,7 @@
         filtered.sort((a, b) => {
             let vA = a[sortField], vB = b[sortField];
             if (typeof vA === 'string') {
-                return sortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
+                return sortAsc ? vA.localeCompare(vB, 'uk', { numeric: true }) : vB.localeCompare(vA, 'uk', { numeric: true });
             }
             return sortAsc ? (vA - vB) : (vB - vA);
         });
@@ -1340,12 +1369,19 @@
     }
 
     function setModalInputsReadOnly(isReadOnly) {
-        const ids = ['mdlDocNumber', 'mdlDriverSelect', 'mdlDriver2Select', 'mdlDateStart', 'mdlDateEnd', 'mdlOdoStart', 'mdlOdoEnd', 'mdlMotoWorkedHours', 'mdlMotoWorkedMins', 'mdlStartFuel', 'mdlConsumedFuel', 'mdlConsumedOil', 'mdlConsumedLiquid'];
+        isModalReadOnly = isReadOnly;
+        const ids = ['mdlDocNumber', 'mdlDriverSelect', 'mdlDriver2Select', 'mdlDateStart', 'mdlDateEnd', 'mdlOdoEnd', 'mdlMotoWorkedHours', 'mdlMotoWorkedMins', 'mdlConsumedFuel', 'mdlConsumedOil', 'mdlConsumedLiquid'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
             if (el.tagName === 'SELECT') el.disabled = isReadOnly;
             else el.readOnly = isReadOnly;
+        });
+
+        // Стартові показники та початкові залишки в баках ЗАВЖДИ заблоковані для всіх ролей!
+        ['mdlOdoStart', 'mdlMotoStart', 'mdlStartFuel', 'mdlEndFuel', 'mdlEndOil', 'mdlEndLiquid'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.readOnly = true;
         });
 
         document.getElementById('btnToggleNewDriver').classList.toggle('hidden', isReadOnly);
@@ -1354,7 +1390,7 @@
         document.getElementById('btnToggleManualFuel').classList.toggle('hidden', isReadOnly);
     }
 
-    // ВІДКРИТТЯ МОДАЛЬНОГО ВІКНА ДЛ / ЛРА (включаючи СВТОЛ/ЕТС по подвійному кліку)
+    // ВІДКРИТТЯ МОДАЛЬНОГО ВІКНА ДЛ / ЛРА
     async function openWaybillModal(id_ovt_it, mode, reviewerRowObj = null) {
         const isDL = (session.operator_type === 'ДЛ' || session.operator_type === 'СВТОЛ');
 
@@ -1394,6 +1430,8 @@
 
         activeModalMode = mode;
         isManualDriverMode = false;
+        isModalReadOnly = (mode === 'view_only') || (mode === 'reviewer_inspect' && (!session.can_edit || activeModalItem.waybill?.status === 'approved'));
+
         document.getElementById('boxManualFuelForm').classList.add('hidden');
         document.getElementById('boxTrailerPicker').classList.add('hidden');
 
@@ -1495,11 +1533,8 @@
 
             const routeSource = (wb && wb.route) ? wb.route : co.lastRoute;
             selectedRouteRegions = routeSource.split(',').map(s => s.trim()).filter(Boolean);
-            renderRouteChips();
-
             modalTrailers = (wb && Array.isArray(wb.trailers_json)) ? JSON.parse(JSON.stringify(wb.trailers_json)) : [];
             populateBattalionTrailersDropdown(v.pidrozdil);
-            renderModalAttachedTrailers();
         } else {
             routeBox.classList.add('hidden');
             trailersSection.classList.add('hidden');
@@ -1518,14 +1553,12 @@
         const secClose = document.getElementById('sectionClosingFields');
         const footer = document.getElementById('mdlFooterBtns');
 
-        setModalInputsReadOnly(false);
-
-        // Якщо це підрозділ Управління — блокуємо зміну номера листа, виписаного Управлінням
-        if (isUprSubunitUser()) {
-            document.getElementById('mdlDocNumber').readOnly = true;
-        }
-
         if (mode === 'open') {
+            setModalInputsReadOnly(false);
+            if (isDL) {
+                renderRouteChips();
+                renderModalAttachedTrailers();
+            }
             document.getElementById('mdlTitle').innerText = isDL
                 ? `📝 Відкриття Дорожнього листа (Період ${curPeriod})`
                 : `📝 Відкриття Листа роботи агрегата (на місяць)`;
@@ -1535,12 +1568,16 @@
                 <button type="button" class="btn btn-primary" onclick="saveOpenWaybillFromModal()">📝 Відкрити лист</button>
             `;
         } else if (mode === 'reviewer_inspect') {
+            const canEdit = Boolean(session.can_edit) && wb.status !== 'approved';
+            isModalReadOnly = !canEdit;
             secClose.classList.remove('hidden');
             setupModalCountersAndFuel(wb, co, isDL);
-            if (isDL) renderModalAttachedTrailers();
-
-            const canEdit = Boolean(session.can_edit) && wb.status !== 'approved';
             setModalInputsReadOnly(!canEdit);
+            if (isDL) {
+                renderRouteChips();
+                renderModalAttachedTrailers();
+            }
+            renderModalReceipts();
 
             document.getElementById('mdlTitle').innerText = `${canEdit ? '✏️ Перевірка та редагування' : '👁️ Перегляд картки'} № ${wb.nomer_dl || wb.nomer_lra} (${wb.bat} / ${wb.pidrozdil})`;
 
@@ -1558,20 +1595,40 @@
                 `;
             }
         } else if (mode === 'view_only') {
+            isModalReadOnly = true;
             secClose.classList.remove('hidden');
             setupModalCountersAndFuel(wb, co, isDL);
-            if (isDL) renderModalAttachedTrailers();
             setModalInputsReadOnly(true);
+            if (isDL) {
+                renderRouteChips();
+                renderModalAttachedTrailers();
+            }
+            renderModalReceipts();
             document.getElementById('mdlTitle').innerText = `👁️ Затверджений лист № ${wb.nomer_dl || wb.nomer_lra}`;
             footer.innerHTML = `<button type="button" class="btn btn-outline" onclick="closeWaybillModal()">Закрити</button>`;
         } else {
+            isModalReadOnly = false;
             document.getElementById('mdlTitle').innerText = (mode === 'close')
                 ? `🔒 Закриття та розрахунок № ${wb.nomer_dl || wb.nomer_lra}`
                 : `✏️ Редагування листа № ${wb.nomer_dl || wb.nomer_lra}`;
 
             secClose.classList.remove('hidden');
             setupModalCountersAndFuel(wb, co, isDL);
-            if (isDL) renderModalAttachedTrailers();
+            setModalInputsReadOnly(false);
+
+            if (isUprSubunitUser()) {
+                document.getElementById('mdlDocNumber').readOnly = true;
+                document.getElementById('mdlDateStart').readOnly = true;
+                document.getElementById('mdlDateEnd').readOnly = true;
+                document.getElementById('boxRouteControls').classList.add('hidden');
+                document.getElementById('btnToggleTrailerPicker').classList.add('hidden');
+            }
+
+            if (isDL) {
+                renderRouteChips();
+                renderModalAttachedTrailers();
+            }
+            renderModalReceipts();
 
             footer.innerHTML = `
                 <button type="button" class="btn btn-outline" onclick="closeWaybillModal()">Скасувати</button>
@@ -1616,10 +1673,12 @@
     }
 
     function toggleTrailerPickerBox() {
+        if (isModalReadOnly || isUprSubunitUser()) return;
         document.getElementById('boxTrailerPicker').classList.toggle('hidden');
     }
 
     function attachSelectedTrailer() {
+        if (isModalReadOnly || isUprSubunitUser()) return;
         const sel = document.getElementById('selBattalionTrailers');
         const trId = sel.value;
         if (!trId) return;
@@ -1649,17 +1708,20 @@
     }
 
     function removeAttachedTrailer(idx) {
+        if (isModalReadOnly || isUprSubunitUser()) return;
         modalTrailers.splice(idx, 1);
         renderModalAttachedTrailers();
     }
 
     function updateTrailerKmValue(idx, val) {
+        if (isModalReadOnly) return;
         if (modalTrailers[idx]) {
             modalTrailers[idx].proideno_km = Math.max(0, Math.round(parseFloat(val) || 0));
         }
     }
 
     function copyVehicleDistToTrailer(idx) {
+        if (isModalReadOnly) return;
         const vehDist = Math.max(0, Math.round(parseFloat(document.getElementById('mdlDistanceDriven')?.value) || 0));
         if (modalTrailers[idx]) {
             modalTrailers[idx].proideno_km = vehDist;
@@ -1675,6 +1737,8 @@
         }
 
         const isClosingOrEditing = (activeModalMode !== 'open');
+        const canDetachTrailer = !isModalReadOnly && !isUprSubunitUser();
+
         container.innerHTML = modalTrailers.map((tr, idx) => `
             <div class="trailer-item-row">
                 <div>
@@ -1685,11 +1749,12 @@
                     ${isClosingOrEditing ? `
                         <label style="margin:0; font-size:0.76rem; color:#fde047;">Пробіг (км) *:</label>
                         <input type="number" step="1" min="0" value="${Math.round(tr.proideno_km || 0)}"
+                               ${isModalReadOnly ? 'readonly' : ''}
                                oninput="updateTrailerKmValue(${idx}, this.value)"
                                style="width:95px; height:30px; padding:4px 8px; background:#0f172a; border:1px solid #a855f7; border-radius:6px; color:#fff; font-weight:700; text-align:center;">
-                        <button type="button" class="btn btn-xs btn-outline" onclick="copyVehicleDistToTrailer(${idx})">= Як у авто</button>
+                        ${!isModalReadOnly ? `<button type="button" class="btn btn-xs btn-outline" onclick="copyVehicleDistToTrailer(${idx})">= Як у авто</button>` : ''}
                     ` : `<span style="font-size:0.75rem; color:#a7f3d0;">Прикріплено</span>`}
-                    <button type="button" class="btn btn-xs btn-danger" onclick="removeAttachedTrailer(${idx})" title="Відкріпити">×</button>
+                    ${canDetachTrailer ? `<button type="button" class="btn btn-xs btn-danger" onclick="removeAttachedTrailer(${idx})" title="Відкріпити">×</button>` : ''}
                 </div>
             </div>
         `).join('');
@@ -1790,6 +1855,7 @@
     }
 
     function toggleManualDriverBox() {
+        if (isModalReadOnly) return;
         const isDL = (session.operator_type === 'ДЛ' || session.operator_type === 'СВТОЛ');
         isManualDriverMode = !isManualDriverMode;
         const box = document.getElementById('boxNewDriver');
@@ -1805,6 +1871,7 @@
     }
 
     function addSelectedRegionToRoute() {
+        if (isModalReadOnly || isUprSubunitUser()) return;
         const sel = document.getElementById('mdlRouteAdder');
         const region = sel.value;
         if (!region) return;
@@ -1816,23 +1883,26 @@
     }
 
     function removeRegionFromRoute(idx) {
+        if (isModalReadOnly || isUprSubunitUser()) return;
         selectedRouteRegions.splice(idx, 1);
         renderRouteChips();
     }
 
     function clearRouteTags() {
+        if (isModalReadOnly || isUprSubunitUser()) return;
         selectedRouteRegions = [];
         renderRouteChips();
     }
 
     function renderRouteChips() {
         const box = document.getElementById('mdlRouteChips');
+        const canModifyRoute = !isModalReadOnly && !isUprSubunitUser();
         if (selectedRouteRegions.length === 0) {
             box.innerHTML = '<span style="color:#94a3b8; font-size:0.78rem;">Оберіть хоча б одну область зі списку вище...</span>';
             return;
         }
         box.innerHTML = selectedRouteRegions.map((reg, i) => `
-            <span class="route-chip">${reg} <b onclick="removeRegionFromRoute(${i})" title="Видалити">×</b></span>
+            <span class="route-chip">${reg} ${canModifyRoute ? `<b onclick="removeRegionFromRoute(${i})" title="Видалити">×</b>` : ''}</span>
         `).join('');
     }
 
@@ -1852,6 +1922,7 @@
 
     function setupModalCountersAndFuel(wb, co, isDL) {
         const box = document.getElementById('boxMdlCounters');
+
         if (isDL) {
             box.className = 'grid-3';
             const startOdo = Math.round(Number(wb.pokaznyky_odometra_vyizd ?? co.odo));
@@ -1861,8 +1932,8 @@
 
             box.innerHTML = `
                 <div class="field-group">
-                    <label for="mdlOdoStart">Одометр виїзду (км)</label>
-                    <input type="number" id="mdlOdoStart" step="1" value="${startOdo}" oninput="recalcModalOdometer()">
+                    <label for="mdlOdoStart">🔒 Одометр виїзду (км)</label>
+                    <input type="number" id="mdlOdoStart" step="1" value="${startOdo}" readonly title="Стартовий одометр захищено від змін">
                 </div>
                 <div class="field-group">
                     <label for="mdlOdoEnd">Одометр повернення (км) *</label>
@@ -1883,7 +1954,7 @@
 
             box.innerHTML = `
                 <div class="field-group">
-                    <label for="mdlMotoStart">Мотогодини на початок</label>
+                    <label for="mdlMotoStart">🔒 Мотогодини на початок</label>
                     <input type="number" id="mdlMotoStart" value="${startMoto}" readonly title="Показники на початок не редагуються">
                 </div>
                 <div class="field-group">
@@ -1905,11 +1976,7 @@
 
         const startFuelInput = document.getElementById('mdlStartFuel');
         startFuelInput.value = Math.round(Number(wb.palne_na_pochatok ?? co.fuel));
-        if (!isDL && !isReviewer()) {
-            startFuelInput.setAttribute('readonly', 'readonly');
-        } else {
-            startFuelInput.removeAttribute('readonly');
-        }
+        startFuelInput.readOnly = true;
 
         document.getElementById('mdlConsumedFuel').value = Math.round(Number(wb.vytracheno_palnoho || 0));
         document.getElementById('mdlConsumedOil').value = Number(wb.vytracheno_olyvy || 0);
@@ -1968,6 +2035,8 @@
                 tagHtml = `<span style="background:rgba(16,185,129,0.16); color:#6ee7b7; border:1px solid #10b981; padding:2px 6px; border-radius:4px; font-size:0.74rem; font-weight:700;">🔒 [${rvLabel}]</span>`;
             }
 
+            const canDeleteReceipt = isManual && !isModalReadOnly;
+
             row.innerHTML = `
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     ${tagHtml}
@@ -1975,7 +2044,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <b style="color:#38bdf8;">+${r.quantity} л</b>
-                    ${isManual ? `<button type="button" class="btn btn-xs btn-danger" onclick="removeModalReceipt(${idx})" title="Видалити">×</button>` : `<span style="font-size:0.72rem; color:#64748b;">з РВ</span>`}
+                    ${canDeleteReceipt ? `<button type="button" class="btn btn-xs btn-danger" onclick="removeModalReceipt(${idx})" title="Видалити">×</button>` : `<span style="font-size:0.72rem; color:#64748b;">${isManual ? 'талон' : 'з РВ'}</span>`}
                 </div>
             `;
             container.appendChild(row);
@@ -1989,6 +2058,7 @@
     }
 
     function removeModalReceipt(idx) {
+        if (isModalReadOnly) return;
         if (modalReceipts[idx] && modalReceipts[idx].source !== 'manual') {
             alert('Офіційні заправки з Роздавальних відомостей видаляти заборонено!');
             return;
@@ -1999,6 +2069,7 @@
     }
 
     function toggleManualFuelForm() {
+        if (isModalReadOnly) return;
         const box = document.getElementById('boxManualFuelForm');
         box.classList.toggle('hidden');
         if (!box.classList.contains('hidden')) {
@@ -2029,6 +2100,7 @@
     }
 
     function confirmAddManualFuel() {
+        if (isModalReadOnly) return;
         const srcType = document.getElementById('selManualSourceType').value;
         const unitCode = document.getElementById('txtManualUnitCode').value.trim().toUpperCase();
         const date = document.getElementById('dtManualFuelDate').value;
@@ -2061,9 +2133,13 @@
 
     function recalcModalBalances() {
         const wb = activeModalItem ? activeModalItem.waybill : null;
-        const co = activeModalItem ? activeModalItem.carryover : { oil: 0, liquid: 0 };
+        const co = activeModalItem ? activeModalItem.carryover : { fuel: 0, oil: 0, liquid: 0 };
 
-        const startFuel = parseFloat(document.getElementById('mdlStartFuel')?.value) || 0;
+        // Початкові залишки пального, олив та спецрідин беремо суворо з бази даних (захищено від змін)
+        const startFuel = wb ? Math.round(Number(wb.palne_na_pochatok ?? co.fuel)) : Math.round(Number(co.fuel || 0));
+        const elStartFuel = document.getElementById('mdlStartFuel');
+        if (elStartFuel) elStartFuel.value = startFuel;
+
         const recEl = document.getElementById('mdlReceivedFuel');
         const recFuel = parseFloat(recEl?.dataset?.val) || 0;
         const recOil = parseFloat(recEl?.dataset?.oil) || 0;
@@ -2203,10 +2279,12 @@
 
     async function saveCloseOrEditWaybill(targetStatus, autoApproveAfterSave = false) {
         const wb = activeModalItem.waybill;
+        const co = activeModalItem.carryover || {};
         const isDL = (session.operator_type === 'ДЛ' || session.operator_type === 'СВТОЛ');
-        const docNum = document.getElementById('mdlDocNumber').value.trim();
 
-        if (!isReviewer() && checkDocNumberDuplicate(docNum, wb.id_ovt_it, wb.id)) {
+        const docNum = isUprSubunitUser() ? String(wb.nomer_dl || wb.nomer_lra || '') : document.getElementById('mdlDocNumber').value.trim();
+
+        if (!isReviewer() && !isUprSubunitUser() && checkDocNumberDuplicate(docNum, wb.id_ovt_it, wb.id)) {
             document.getElementById('mdlDocNumber').focus();
             return;
         }
@@ -2215,7 +2293,8 @@
 
         let odoStart = 0, odoEnd = 0, dist = 0, motoStart = 0, motoWorked = 0, motoEnd = 0;
         if (isDL) {
-            odoStart = parseFloat(document.getElementById('mdlOdoStart').value) || 0;
+            // Стартовий одометр незмінний і завжди береться з бази
+            odoStart = Math.round(Number(wb.pokaznyky_odometra_vyizd ?? co.odo ?? 0));
             odoEnd = parseFloat(document.getElementById('mdlOdoEnd').value) || 0;
             if (odoEnd < odoStart) {
                 alert('Одометр повернення не може бути меншим за одометр виїзду!');
@@ -2223,24 +2302,44 @@
             }
             dist = Math.round(odoEnd - odoStart);
         } else {
-            motoStart = parseFloat(document.getElementById('mdlMotoStart').value) || 0;
+            // Стартові мотогодини незмінні і завжди беруться з бази
+            motoStart = Number(wb.pokaznyky_motohodyn_pochatok ?? co.moto ?? 0);
             const h = Math.max(0, parseInt(document.getElementById('mdlMotoWorkedHours')?.value, 10) || 0);
             const m = Math.max(0, parseInt(document.getElementById('mdlMotoWorkedMins')?.value, 10) || 0);
             motoWorked = Number((h + (m / 60)).toFixed(2));
             motoEnd = Number((motoStart + motoWorked).toFixed(2));
         }
 
-        const startFuel = parseFloat(document.getElementById('mdlStartFuel').value) || 0;
-        const recFuel = parseFloat(document.getElementById('mdlReceivedFuel').dataset.val) || 0;
+        // Початкові залишки пального, олив та спецрідин у баках незмінні і завжди беруться з бази
+        const startFuel = Math.round(Number(wb.palne_na_pochatok ?? co.fuel ?? 0));
+        const startOil = Number(wb.olyva_na_pochatok ?? co.oil ?? 0);
+        const startLiq = Number(wb.ridyna_na_pochatok ?? co.liquid ?? 0);
+
+        const recEl = document.getElementById('mdlReceivedFuel');
+        const recFuel = parseFloat(recEl?.dataset?.val) || 0;
+        const recOil = parseFloat(recEl?.dataset?.oil) || 0;
+        const recLiq = parseFloat(recEl?.dataset?.liq) || 0;
+
         const consFuel = parseFloat(document.getElementById('mdlConsumedFuel').value) || 0;
+        const consOil = parseFloat(document.getElementById('mdlConsumedOil').value) || 0;
+        const consLiq = parseFloat(document.getElementById('mdlConsumedLiquid').value) || 0;
 
         if (startFuel + recFuel - consFuel < 0) {
             alert('Увага: Витрата пального перевищує наявний залишок у баку та отримання!');
             return;
         }
+        if (Number((startOil + recOil - consOil).toFixed(1)) < 0) {
+            alert('Увага: Витрата оливи перевищує наявний залишок у баку та отримання!');
+            return;
+        }
+        if (Number((startLiq + recLiq - consLiq).toFixed(1)) < 0) {
+            alert('Увага: Витрата спецрідин перевищує наявний залишок та отримання!');
+            return;
+        }
 
-        const dStart = document.getElementById('mdlDateStart').value;
-        const dEnd = document.getElementById('mdlDateEnd').value;
+        const dStart = isUprSubunitUser() ? wb.date_start : document.getElementById('mdlDateStart').value;
+        const dEnd = isUprSubunitUser() ? wb.date_end : document.getElementById('mdlDateEnd').value;
+        const finalRoute = isDL ? (isUprSubunitUser() ? wb.route : selectedRouteRegions.join(', ')) : null;
 
         const payload = {
             work_id: wb.id,
@@ -2253,7 +2352,7 @@
             driver2_pib: drv2.pib,
             date_start: dStart,
             date_end: dEnd,
-            route: isDL ? selectedRouteRegions.join(', ') : null,
+            route: finalRoute,
             trailers_json: isDL ? modalTrailers : [],
             odo_start: odoStart,
             odo_end: odoEnd,
@@ -2263,8 +2362,8 @@
             moto_end: motoEnd,
             start_fuel: startFuel,
             consumed_fuel: consFuel,
-            consumed_oil: parseFloat(document.getElementById('mdlConsumedOil').value) || 0,
-            consumed_liquid: parseFloat(document.getElementById('mdlConsumedLiquid').value) || 0,
+            consumed_oil: consOil,
+            consumed_liquid: consLiq,
             receipts_json: modalReceipts
         };
 
@@ -2304,24 +2403,78 @@
     }
 
     // =========================================================================
-    // СЛУЖБА ПЕРЕВІРКИ (СВТОЛ / ЕТС): ЧЕРГА ПЕРЕВІРКИ + ОЛИВИ/РІДИНИ + АРХІВ
+    // СЛУЖБА ПЕРЕВІРКИ (СВТОЛ / ЕТС): ЧЕРГА ПЕРЕВІРКИ, АРХІВ, ФІЛЬТРИ ТА СОРТУВАННЯ ПІДРОЗДІЛІВ
     // =========================================================================
     function renderReviewerTableHeaders(isSvtol, targetHeadId, isArchive) {
         const thead = document.getElementById(targetHeadId);
+        const sortFn = isArchive ? 'sortReviewerArchiveBy' : 'sortReviewerQueueBy';
+        const docCol = isSvtol ? 'nomer_dl' : 'nomer_lra';
         thead.innerHTML = `
-            ${isArchive ? '<th>Місяць</th>' : ''}
-            <th>Бат.</th>
-            <th>Підр.</th>
-            <th>Період</th>
-            <th>№ листа</th>
-            <th>Військ. №</th>
-            <th>${isSvtol ? 'Назва ОВТ / Причіп' : 'Назва ІТ'}</th>
+            ${isArchive ? `<th onclick="${sortFn}('month_key')">Місяць ⇅</th>` : ''}
+            <th onclick="${sortFn}('bat')">Бат. ⇅</th>
+            <th onclick="${sortFn}('pidrozdil')">Підр. ⇅</th>
+            <th onclick="${sortFn}('period')">Період ⇅</th>
+            <th onclick="${sortFn}('${docCol}')">№ листа ⇅</th>
+            <th onclick="${sortFn}('viyskovyi_nomer')">Військ. № ⇅</th>
+            <th onclick="${sortFn}('marka_tekhniky')">${isSvtol ? 'Назва ОВТ / Причіп' : 'Назва ІТ'} ⇅</th>
             ${isSvtol ? '<th>Водії</th><th>Маршрут</th><th>Виїзд</th><th>Поверн.</th><th>Пройд.</th>' : '<th>Відповідальний</th><th>Поч. м/г</th><th>Кін. м/г</th><th>Відпрац.</th>'}
             <th>Пальне (Поч / Отр / Витр / Зал)</th>
             <th style="color:#fde047;">Олива (Отр / Витр / Зал)</th>
             <th style="color:#86efac;">Рідини (Отр / Витр / Зал)</th>
             <th>${isArchive ? 'Дії з архівом' : 'Рішення служби'}</th>
         `;
+    }
+
+    function sortReviewerQueueBy(field) {
+        if (revQueueSortField === field) revQueueSortAsc = !revQueueSortAsc;
+        else { revQueueSortField = field; revQueueSortAsc = true; }
+        renderReviewerQueueRows();
+    }
+
+    function sortReviewerArchiveBy(field) {
+        if (revArchiveSortField === field) revArchiveSortAsc = !revArchiveSortAsc;
+        else { revArchiveSortField = field; revArchiveSortAsc = true; }
+        renderReviewerArchiveRows();
+    }
+
+    function sortReviewerFleetBy(field) {
+        if (revFleetSortField === field) revFleetSortAsc = !revFleetSortAsc;
+        else { revFleetSortField = field; revFleetSortAsc = true; }
+        renderFleetTable();
+    }
+
+    function populateSubunitFilterFromList(selectElId, batVal, rowsList) {
+        const sel = document.getElementById(selectElId);
+        if (!sel) return;
+        const prev = sel.value || 'ALL';
+        const units = [...new Set(
+            (rowsList || [])
+                .filter(r => batVal === 'ALL' || r.bat === batVal)
+                .map(r => r.pidrozdil)
+                .filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, 'uk', { numeric: true }));
+
+        sel.innerHTML = `<option value="ALL">Усі підрозділи (${units.length})</option>`;
+        units.forEach(u => sel.add(new Option(u, u)));
+        if (units.includes(prev)) sel.value = prev;
+    }
+
+    function onReviewerQueueBatFilterChange() {
+        const bat = document.getElementById('selReviewerBatFilter').value;
+        populateSubunitFilterFromList('selReviewerPidrozdilFilter', bat, reviewerQueueCache);
+        renderReviewerQueueRows();
+    }
+
+    function onReviewerArchiveBatFilterChange() {
+        const bat = document.getElementById('selArchiveBat').value;
+        populateSubunitFilterFromList('selArchivePidrozdil', bat, reviewerArchiveCache);
+        renderReviewerArchiveRows();
+    }
+
+    function onReviewerFleetBatFilterChange() {
+        const bat = document.getElementById('selFleetBat').value;
+        populateSubunitFilterFromList('selFleetPidrozdil', bat, fleetCache);
+        renderFleetTable();
     }
 
     function openReviewerRowModal(workId, isFromArchive) {
@@ -2340,6 +2493,7 @@
             if (resp.ok) {
                 const res = await resp.json();
                 reviewerQueueCache = res.rows || [];
+                populateSubunitFilterFromList('selReviewerPidrozdilFilter', document.getElementById('selReviewerBatFilter').value, reviewerQueueCache);
                 renderReviewerQueueRows();
             }
         } catch (e) {
@@ -2350,12 +2504,14 @@
     function renderReviewerQueueRows() {
         const tbody = document.getElementById('tblReviewerBody');
         const batFilter = document.getElementById('selReviewerBatFilter').value;
+        const pidrFilter = document.getElementById('selReviewerPidrozdilFilter')?.value || 'ALL';
         const perFilter = document.getElementById('selReviewerPeriodFilter').value;
         const q = (document.getElementById('txtRevSearch').value || '').trim().toLowerCase();
         const isSvtol = (session.operator_type === 'СВТОЛ');
 
-        const filtered = reviewerQueueCache.filter(r => {
+        let filtered = reviewerQueueCache.filter(r => {
             if (batFilter !== 'ALL' && r.bat !== batFilter) return false;
+            if (pidrFilter !== 'ALL' && r.pidrozdil !== pidrFilter) return false;
             if (perFilter !== 'ALL' && r.period !== perFilter) return false;
             if (q) {
                 const trStr = (r.trailers_json || []).map(t => `${t.viyskovyi_nomer} ${t.marka_tekhniky}`).join(' ');
@@ -2363,6 +2519,11 @@
                 if (!hay.includes(q)) return false;
             }
             return true;
+        });
+
+        filtered.sort((a, b) => {
+            let vA = String(a[revQueueSortField] ?? ''), vB = String(b[revQueueSortField] ?? '');
+            return revQueueSortAsc ? vA.localeCompare(vB, 'uk', { numeric: true }) : vB.localeCompare(vA, 'uk', { numeric: true });
         });
 
         if (filtered.length === 0) {
@@ -2397,6 +2558,7 @@
             if (resp.ok) {
                 const res = await resp.json();
                 reviewerArchiveCache = res.rows || [];
+                populateSubunitFilterFromList('selArchivePidrozdil', document.getElementById('selArchiveBat').value, reviewerArchiveCache);
                 renderReviewerArchiveRows();
             }
         } catch (e) {
@@ -2407,12 +2569,14 @@
     function renderReviewerArchiveRows() {
         const tbody = document.getElementById('tblArchiveBody');
         const batFilter = document.getElementById('selArchiveBat').value;
+        const pidrFilter = document.getElementById('selArchivePidrozdil')?.value || 'ALL';
         const perFilter = document.getElementById('selArchivePeriod').value;
         const q = (document.getElementById('txtArchiveSearch').value || '').trim().toLowerCase();
         const isSvtol = (session.operator_type === 'СВТОЛ');
 
-        const filtered = reviewerArchiveCache.filter(r => {
+        let filtered = reviewerArchiveCache.filter(r => {
             if (batFilter !== 'ALL' && r.bat !== batFilter) return false;
+            if (pidrFilter !== 'ALL' && r.pidrozdil !== pidrFilter) return false;
             if (perFilter !== 'ALL' && r.period !== perFilter) return false;
             if (q) {
                 const trStr = (r.trailers_json || []).map(t => `${t.viyskovyi_nomer} ${t.marka_tekhniky}`).join(' ');
@@ -2420,6 +2584,11 @@
                 if (!hay.includes(q)) return false;
             }
             return true;
+        });
+
+        filtered.sort((a, b) => {
+            let vA = String(a[revArchiveSortField] ?? ''), vB = String(b[revArchiveSortField] ?? '');
+            return revArchiveSortAsc ? vA.localeCompare(vB, 'uk', { numeric: true }) : vB.localeCompare(vA, 'uk', { numeric: true });
         });
 
         if (filtered.length === 0) {
@@ -2473,7 +2642,7 @@
             <tr ondblclick="openReviewerRowModal(${r.id}, ${isArchive})" title="Подвійний клік — відкрити повну картку листа">
                 ${isArchive ? `<td><b>${r.month_key}</b></td>` : ''}
                 <td><b>${r.bat}</b></td>
-                <td>${r.pidrozdil}</td>
+                <td><b>${r.pidrozdil}</b></td>
                 <td>${r.period}</td>
                 <td><b>${r.nomer_dl || r.nomer_lra}</b></td>
                 <td><b style="color:#38bdf8;">${r.viyskovyi_nomer}</b></td>
@@ -2772,7 +2941,7 @@
         }
     }
 
-    // РЕЄСТР ТЕХНІКИ: РОЗДІЛЕННЯ ОВТ ТА ІТ + БЛОКУВАННЯ ПІДРОЗДІЛУ
+    // РЕЄСТР ТЕХНІКИ: РОЗДІЛЕННЯ ОВТ ТА ІТ + СОРТУВАННЯ І ФІЛЬТР ЗА ПІДРОЗДІЛОМ
     async function loadReviewerFleet() {
         try {
             const resp = await fetch(`${API.initTerminal}?bat=ALL&type=${encodeURIComponent(session.operator_type)}&month_key=${encodeURIComponent(session.month_key)}`);
@@ -2793,6 +2962,7 @@
                 });
                 fleetCache = Array.from(map.values());
 
+                populateSubunitFilterFromList('selFleetPidrozdil', document.getElementById('selFleetBat').value, fleetCache);
                 renderFleetTable();
             }
         } catch (e) {
@@ -2807,12 +2977,12 @@
 
         thead.innerHTML = `
             <th>№</th>
-            <th>Батальйон</th>
-            <th>Підрозділ</th>
-            <th>Тип</th>
-            <th>${isSvtol ? 'Військ. номер' : 'Інв. номер ІТ'}</th>
-            <th>Назва / Марка</th>
-            ${!isSvtol ? '<th>№ генератора / двигуна</th>' : ''}
+            <th onclick="sortReviewerFleetBy('bat')">Батальйон ⇅</th>
+            <th onclick="sortReviewerFleetBy('pidrozdil')">Підрозділ ⇅</th>
+            <th onclick="sortReviewerFleetBy('ovt_it')">Тип ⇅</th>
+            <th onclick="sortReviewerFleetBy('viyskovyi_nomer')">${isSvtol ? 'Військ. номер' : 'Інв. номер ІТ'} ⇅</th>
+            <th onclick="sortReviewerFleetBy('marka_tekhniky')">Назва / Марка ⇅</th>
+            ${!isSvtol ? '<th onclick="sortReviewerFleetBy(\'nomer_dvyhuna\')">№ генератора / двигуна ⇅</th>' : ''}
             <th>Пальне</th>
             <th>${isSvtol ? 'Норма (л/100км)' : 'Норма (л/год)'}</th>
             <th>${isSvtol ? 'Початковий пробіг (км)' : 'Початкові мотогодини (м/г)'}</th>
@@ -2821,15 +2991,22 @@
         `;
 
         const batF = document.getElementById('selFleetBat').value;
+        const pidrF = document.getElementById('selFleetPidrozdil')?.value || 'ALL';
         const q = (document.getElementById('txtFleetSearch').value || '').trim().toLowerCase();
 
-        const filtered = fleetCache.filter(v => {
+        let filtered = fleetCache.filter(v => {
             if (batF !== 'ALL' && v.bat !== batF) return false;
+            if (pidrF !== 'ALL' && v.pidrozdil !== pidrF) return false;
             if (q) {
                 const hay = `${v.bat} ${v.pidrozdil} ${v.viyskovyi_nomer} ${v.marka_tekhniky} ${v.nomer_dvyhuna || ''}`.toLowerCase();
                 if (!hay.includes(q)) return false;
             }
             return true;
+        });
+
+        filtered.sort((a, b) => {
+            let vA = String(a[revFleetSortField] ?? ''), vB = String(b[revFleetSortField] ?? '');
+            return revFleetSortAsc ? vA.localeCompare(vB, 'uk', { numeric: true }) : vB.localeCompare(vA, 'uk', { numeric: true });
         });
 
         const colSpanCount = isSvtol ? 11 : 12;
@@ -2850,7 +3027,7 @@
                 <td>${v.palne_typ || '-'}</td>
                 <td>${v.ovt_it === 'Причіп' ? '-' : (v.l_100_km || 0)}</td>
                 <td><b>${isSvtol ? Math.round(v.ostanni_pokaznyky_odometra || 0) + ' км' : (v.pokaznyk_lichylnyka_motohodyn || 0) + ' м/г'}</b></td>
-                <td style="color:#64748b;">🔒 ${Math.round(v.zalyshok_v_batsi_total || 0)} л</td>
+                <td style="color:#64748b;">🔒 П:${Math.round(v.zalyshok_v_batsi_total || 0)}л | О:${v.olyva_zalyshok_total || 0}л | Р:${v.ridyna_zalyshok_total || 0}л</td>
                 <td>
                     <button class="btn btn-xs btn-outline" onclick="event.stopPropagation(); openFleetModal(${v.id_ovt_it})">✏️ Ред.</button>
                     <button class="btn btn-xs btn-outline" title="Паспорт-історія" onclick="event.stopPropagation(); jumpToVehicleHistory(${v.id_ovt_it})">📖</button>
