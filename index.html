@@ -97,7 +97,7 @@
     </div>
 
     <form id="waybillAuthForm">
-        <!-- 1. Напрямок обліку (визначає режим) -->
+        <!-- 1. Напрямок обліку -->
         <div class="mb-3">
             <label for="operatorTypeSelect" class="form-label">Напрямок / Служба</label>
             <select class="form-select" id="operatorTypeSelect" required onchange="handleRoleChange(this.value)">
@@ -108,12 +108,18 @@
             </select>
         </div>
 
-        <!-- 2. Батальйон (авто-ALL для СВТОЛ/ЕТС) -->
+        <!-- 2. Батальйон -->
         <div class="mb-3">
             <label for="batSelect" class="form-label">Батальйон</label>
-            <select class="form-select" id="batSelect" required disabled>
+            <select class="form-select" id="batSelect" required disabled onchange="handleBatChange(this.value)">
                 <option value="" selected disabled>Завантаження структури...</option>
             </select>
+        </div>
+
+        <!-- 2.1. Підрозділ Управління (з'являється автоматично при виборі Батальйону "Упр") -->
+        <div class="mb-3 d-none" id="uprSubunitContainer">
+            <label for="uprSubunitSelect" class="form-label" style="color:#38bdf8;">Підрозділ Управління</label>
+            <select class="form-select" id="uprSubunitSelect"></select>
         </div>
 
         <!-- 3. Звітний період -->
@@ -153,6 +159,8 @@
     const N8N_URL_LOG_ENTER  = 'https://n8n.pmm-system.com/webhook/v4/log-waybill-enter';
 
     const batSelect          = document.getElementById('batSelect');
+    const uprSubunitContainer= document.getElementById('uprSubunitContainer');
+    const uprSubunitSelect   = document.getElementById('uprSubunitSelect');
     const operatorTypeSelect = document.getElementById('operatorTypeSelect');
     const monthSelect        = document.getElementById('monthSelect');
     const yearSelect         = document.getElementById('yearSelect');
@@ -164,15 +172,58 @@
 
     let availableBats = [];
     let allMonthKeys  = [];
+    let uprSubunits   = [];
+
+    const DEFAULT_UPR_SUBUNITS = [
+        { pidrozdil: 'АБ', pidrozdil_name: 'Артилерійська батарея' },
+        { pidrozdil: 'ЗБ', pidrozdil_name: 'Зенітна батарея' },
+        { pidrozdil: 'РР', pidrozdil_name: 'Розвідувальна рота' },
+        { pidrozdil: 'РЗ', pidrozdil_name: "Рота зв'язку" },
+        { pidrozdil: 'РРЕБ', pidrozdil_name: 'Рота радіоелектронної боротьби' },
+        { pidrozdil: 'ІР', pidrozdil_name: 'Інженерна рота' },
+        { pidrozdil: 'РМЗ', pidrozdil_name: 'Рота матеріального забезпечення' },
+        { pidrozdil: 'РемР', pidrozdil_name: 'Ремонтна рота' },
+        { pidrozdil: 'МР', pidrozdil_name: 'Медична рота' },
+        { pidrozdil: 'КВ', pidrozdil_name: 'Комендантський взвод' },
+        { pidrozdil: 'ВЗНП', pidrozdil_name: 'Відділення забезпечення навчального процесу' },
+        { pidrozdil: 'ВОтРБпК', pidrozdil_name: 'Взвод обслуг. та рем. БпАК' },
+        { pidrozdil: 'ГПТЗР', pidrozdil_name: 'Група протидії тех. засобам розвідки' },
+        { pidrozdil: 'ГКЗІ', pidrozdil_name: 'Група криптографічного захисту інформації' },
+        { pidrozdil: 'ВС', pidrozdil_name: 'Відділення снайперів' },
+        { pidrozdil: '331р', pidrozdil_name: '331 окрема рота' }
+    ];
 
     function handleRoleChange(role) {
         if (role === 'СВТОЛ' || role === 'ЕТС') {
             batSelect.innerHTML = '<option value="ALL" selected>Всі батальйони (Служба бригади)</option>';
             batSelect.disabled = true;
+            uprSubunitContainer.classList.add('d-none');
         } else {
             batSelect.disabled = false;
             renderBattalionOptions();
+            handleBatChange(batSelect.value);
         }
+    }
+
+    function handleBatChange(bat) {
+        const role = operatorTypeSelect.value;
+        if (bat === 'Упр' && (role === 'ДЛ' || role === 'ЛРА')) {
+            renderUprSubunitsOptions();
+            uprSubunitContainer.classList.remove('d-none');
+        } else {
+            uprSubunitContainer.classList.add('d-none');
+        }
+    }
+
+    function renderUprSubunitsOptions() {
+        uprSubunitSelect.innerHTML = '<option value="ALL" selected>🏢 Управління (Виписка листів — всі підрозділи)</option>';
+        const list = (uprSubunits && uprSubunits.length > 0) ? uprSubunits : DEFAULT_UPR_SUBUNITS;
+        list.forEach(u => {
+            const label = (u.pidrozdil_name && u.pidrozdil_name !== u.pidrozdil)
+                ? `${u.pidrozdil} (Упр) — ${u.pidrozdil_name}`
+                : `${u.pidrozdil} (Упр)`;
+            uprSubunitSelect.add(new Option(label, u.pidrozdil));
+        });
     }
 
     function renderBattalionOptions() {
@@ -214,6 +265,7 @@
 
             availableBats = res.bats || ['1ЛБ', '2ЛБ', '3ЛБ', '4ЛБ', '5ЛБ', '1БПС', '2БПС', 'Упр'];
             allMonthKeys = res.month_keys || [];
+            uprSubunits = res.upr_subunits || DEFAULT_UPR_SUBUNITS;
 
             renderBattalionOptions();
             batSelect.disabled = false;
@@ -300,6 +352,7 @@
 
         const operatorType = operatorTypeSelect.value;
         const bat          = (operatorType === 'СВТОЛ' || operatorType === 'ЕТС') ? 'ALL' : batSelect.value;
+        const pidrozdil    = (bat === 'Упр' && !uprSubunitContainer.classList.contains('d-none')) ? uprSubunitSelect.value : 'ALL';
         const month        = monthSelect.value;
         const year         = yearSelect.value;
         const monthKey     = `${month}_${year}`;
@@ -316,6 +369,7 @@
         btnSpinner.classList.remove('d-none');
 
         const info = getDeviceAndBrowser();
+        const logCategory = (bat === 'Упр' && pidrozdil !== 'ALL') ? `${pidrozdil} (Упр)` : bat;
 
         try {
             const resAuth = await fetch(N8N_URL_CHECK_AUTH, {
@@ -323,6 +377,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     bat: bat,
+                    pidrozdil: pidrozdil,
                     operator_type: operatorType,
                     month_key: monthKey,
                     password: pass
@@ -336,10 +391,14 @@
             if (res && res.success === true) {
                 btnText.innerText = 'Успішно! Перехід...';
 
+                const canEditFlag = (res.can_edit !== undefined) ? Boolean(res.can_edit) : true;
+
                 sessionStorage.setItem('pmm_waybill_session', JSON.stringify({
                     bat: bat,
+                    pidrozdil: pidrozdil,
                     operator_type: operatorType,
                     month_key: monthKey,
+                    can_edit: canEditFlag,
                     pib: res.pib || '',
                     military_rank: res.military_rank || ''
                 }));
@@ -350,17 +409,17 @@
                         keepalive: true,
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            category: bat,
+                            category: logCategory,
                             sub_unit: operatorType,
                             month_key: monthKey,
-                            status: `Користувач ${operatorType} (${bat}): Успішно`,
+                            status: `Користувач ${operatorType} (${logCategory}): Успішно`,
                             device: info.device,
                             browser: info.browser
                         })
                     });
                 } catch (logErr) {}
 
-                window.location.href = `index_PMM_waybill.html?bat=${encodeURIComponent(bat)}&type=${encodeURIComponent(operatorType)}&month_key=${encodeURIComponent(monthKey)}`;
+                window.location.href = `index_PMM_waybill.html?bat=${encodeURIComponent(bat)}&pidrozdil=${encodeURIComponent(pidrozdil)}&type=${encodeURIComponent(operatorType)}&month_key=${encodeURIComponent(monthKey)}&can_edit=${canEditFlag ? '1' : '0'}`;
             } else {
                 try {
                     await fetch(N8N_URL_LOG_ENTER, {
@@ -368,10 +427,10 @@
                         keepalive: true,
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            category: bat,
+                            category: logCategory,
                             sub_unit: operatorType,
                             month_key: monthKey,
-                            status: `Користувач ${operatorType} (${bat}): Невірний пароль`,
+                            status: `Користувач ${operatorType} (${logCategory}): Невірний пароль`,
                             device: info.device,
                             browser: info.browser
                         })
